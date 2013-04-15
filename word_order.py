@@ -17,7 +17,7 @@ def np_vp_order_check(tree):
             pass
     return wrong
 
-essay_index = 3
+essay_index = 13
 for essay in [essay_utils.essays[essay_index]]:
     essay_index += 1
     print "Parsing Essay %d" % (essay_index,)

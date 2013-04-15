@@ -4,6 +4,7 @@ things back into python, but thursday is pretty close so what can I do?
 """
 import os
 from subprocess import Popen, PIPE, STDOUT
+from nltk.tree import Tree
 
 
 def _standford_parser_cmd():
@@ -23,4 +24,4 @@ def parse(sentence):
     # throw away the garbgage we don't want from the parser's response.
     # this could probably get us in trouble since it'll hide errors etc,
     # but we got deadlines....
-    return response.split("\n")[3]
+    return Tree.parse(response.split("\n")[3])

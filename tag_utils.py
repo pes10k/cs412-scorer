@@ -4,7 +4,11 @@ import os
 
 # Dumb global structures, just needed once through the whole
 simple_tag_subs = dict(NNS='NN', NNPS='NNP', VBD='VB', VBG='VB', VBN='VB',
-                       VBP='VB', VBZ='VBZ')
+                       VBP='VB', VBZ='VBZ',
+
+                       # Simplify all pronouns to nouns?
+                       PRP='NN')
+simple_tag_subs['PRP$'] = 'NN'
 
 
 def simplify_tag(tag):
@@ -26,7 +30,7 @@ def simplify_tags(tags):
 
 
 def is_valid_tag(tag):
-    tags_to_ignore = ('``', '""', "''", '--', '-NONE-')
+    tags_to_ignore = (',', '.', '``', '""', "''", ':', '#', '', '--', '-NONE-')
     return (tag not in tags_to_ignore and (len(tag) > 1 or (ord(tag) > 64 and ord(tag) < 91)))
 
 
@@ -53,6 +57,13 @@ def sets_of_tags(tags, chunk_size=1):
 
 def serialize_tags(tags):
     return "@".join(tags)
+
+
+def simple_tag(tag):
+    if "-" in tag:
+        return tag.split("-")[0]
+    else:
+        return tag
 
 
 def get_cached_counts(file_name='tag_counts.data', worker_func=None):
