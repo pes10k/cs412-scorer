@@ -25,14 +25,16 @@ def prod(nums):
 def avg_prob(nums):
     return sum(nums)/len(nums)
 
-
-for essay in essay_utils.essays[1:2]:
-    for line in essay[5:6]:
-        print "Working on: %s" % (line,)
+essay_index = 0
+for essay in essay_utils.essays[2:]:
+    essay_index += 1
+    print "Working on Essay: %d" % (essay_index,)
+    for line in essay:
+        print " -- Working on: %s" % (line,)
         all_possible_sentences = _possible_sentences_in_line(line)
         all_possible_sentence_probs = []
         for possible_sentences in all_possible_sentences:
-            print possible_sentences
+            print " -- -- Examining: %s" % (possible_sentences,)
             prob_for_sentences = []
             for possible_sentence in possible_sentences:
                 sentence_tree = stanford_parser.parse(possible_sentence)[0]
@@ -42,11 +44,11 @@ for essay in essay_utils.essays[1:2]:
                     probs = hmm_utils.prob_of_all_transitions(transition, counts, gram_size=3)
                     sentence_probs += probs
                 prob_for_sentences.append(prod(sentence_probs))
-            print avg_prob(prob_for_sentences)
+            print " -- -- %f:" % (avg_prob(prob_for_sentences),)
             all_possible_sentence_probs.append(avg_prob(prob_for_sentences))
         max_prob = max(all_possible_sentence_probs)
         parse_for_max_prob = all_possible_sentences[all_possible_sentence_probs.index(max_prob)]
-        print " -- MAX Prob: %f" % (max_prob,)
-        print " -- Parse for max prob: %s" % (parse_for_max_prob,)
-        print " -- Num Sentences: %d" % (len(parse_for_max_prob),)
+        print " -- -- MAX Prob: %f" % (max_prob,)
+        print " -- -- Parse for max prob: %s" % (parse_for_max_prob,)
+        print " -- -- Num Sentences: %d" % (len(parse_for_max_prob),)
         print " -------------"
