@@ -24,4 +24,4 @@ def parse(sentence):
     # throw away the garbgage we don't want from the parser's response.
     # this could probably get us in trouble since it'll hide errors etc,
     # but we got deadlines....
-    return Tree.parse(response.split("\n")[3])
+    return [Tree.parse(line) for line in response.split("\n") if len(line) > 2 and line[0] == "(" and line[-1] == ")"]

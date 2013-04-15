@@ -10,7 +10,6 @@ def prob_of_all_transitions(transitions, counts, gram_size=2):
     probs = []
     for i in range(0, len(transitions) - gram_size + 1):
         sub_transitions = transitions[i:(i+gram_size)]
-        print sub_transitions
         probs.append(prob_of_transition(sub_transitions, counts))
     return probs
 
