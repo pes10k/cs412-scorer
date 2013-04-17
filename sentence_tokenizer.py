@@ -6,7 +6,7 @@ import cmd_utils
 import tag_utils
 
 
-correct = (
+correct_line_counts = (
     (1, 1, 1, 1, 1, 2, 1,),  # 1
     (1, 1, 1, 1, 1, 2,),
     (1, 1, 1, 1, 1, 1, 1, 1,),
@@ -32,7 +32,7 @@ correct = (
 counts = hmm_utils.get_transition_counts()
 essay_index = int(cmd_utils.cmd_arg('--essay', 0)) - 1
 line_index = int(cmd_utils.cmd_arg('--line', -1))
-log_level = int(cmd_utils.cmd_arg('--log', 0))
+log_level = int(cmd_utils.cmd_arg('--log', -1))
 use_stdin = cmd_utils.cmd_flag('--stdin')
 
 
@@ -204,8 +204,7 @@ def parse_sentences(line):
         if weighted_score > 0:
             log("Valid Parse: %s" % (possible_sentences,), 2)
             log(weighted_score, 2)
-        # log("%f (weighted %f)" % (prod(prob_for_sentences),
-        #                           weighted_score), 1)
+
         all_possible_sentence_probs.append(weighted_score)
     max_prob = max(all_possible_sentence_probs)
     parse_for_max_prob = all_possible_sentences[all_possible_sentence_probs.index(max_prob)]
@@ -217,39 +216,40 @@ def parse_sentences(line):
     return all_possible_sentences[all_possible_sentence_probs.index(max_prob)]
 
 
-## Simple method for testing from STDIN
-if use_stdin:
-    print parse_sentences(cmd_utils.get_stdin())
-else:
-    essays = essay_utils.essays if essay_index == -1 else [essay_utils.essays[essay_index]]
+if __name__ == '__main__':
+    ## Simple method for testing from STDIN
+    if use_stdin:
+        print parse_sentences(cmd_utils.get_stdin())
+    else:
+        essays = essay_utils.essays if essay_index == -1 else [essay_utils.essays[essay_index]]
 
-    essays_in_corpus = []
+        essays_in_corpus = []
 
-    for essay in essays:
+        for essay in essays:
 
-        sentences_for_essay = []
-        lines = essay if line_index == -1 else [essay[line_index]]
+            sentences_for_essay = []
+            lines = essay if line_index == -1 else [essay[line_index]]
 
-        for line in lines:
-            sentences_for_essay.append(len(parse_sentences(line)))
-        log(" Sentence counts for essay: %s" % (sentences_for_essay,))
-        essays_in_corpus.append(sentences_for_essay)
+            for line in lines:
+                sentences_for_essay.append(len(parse_sentences(line)))
+            log(" Sentence counts for essay: %s" % (sentences_for_essay,))
+            essays_in_corpus.append(sentences_for_essay)
 
-    wrong_answers = []
-    wrong_tally = 0
-    for i in range(0, len(essays_in_corpus)):
-        wrong_answers.append([])
-        for j in range(0, len(essays_in_corpus[i])):
-            correct_lines = correct[i][j]
-            found_lines = essays_in_corpus[i][j]
-            diff = correct_lines - found_lines
-            wrong_tally += abs(diff)
-            wrong_answers[i].append(0 if diff == 0 else diff)
+        wrong_answers = []
+        wrong_tally = 0
+        for i in range(0, len(essays_in_corpus)):
+            wrong_answers.append([])
+            for j in range(0, len(essays_in_corpus[i])):
+                correct_lines = correct_line_counts[i][j]
+                found_lines = essays_in_corpus[i][j]
+                diff = correct_lines - found_lines
+                wrong_tally += abs(diff)
+                wrong_answers[i].append(0 if diff == 0 else diff)
 
-    log("Num Wrong Answers: %d" % (wrong_tally,), 0)
-    for row in wrong_answers:
-        print row
+        log("Num Wrong Answers: %d" % (wrong_tally,), 0)
+        for row in wrong_answers:
+            print row
 
-    log("Counts", 0)
-    for row in essays_in_corpus:
-        print row
+        log("Counts", 0)
+        for row in essays_in_corpus:
+            print row
