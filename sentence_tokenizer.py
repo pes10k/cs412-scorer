@@ -4,6 +4,7 @@ import hmm_utils
 import essay_utils
 import cmd_utils
 import tag_utils
+from cache_utils import cache_get, cache_set
 
 
 correct_line_counts = (
@@ -34,7 +35,6 @@ essay_index = int(cmd_utils.cmd_arg('--essay', 0)) - 1
 line_index = int(cmd_utils.cmd_arg('--line', -1))
 log_level = int(cmd_utils.cmd_arg('--log', -1))
 use_stdin = cmd_utils.cmd_flag('--stdin')
-
 
 
 # How much to prefer long answers over shorter onces
@@ -85,10 +85,14 @@ def is_possible_sentence(tree):
         #ordered_tags = list([tr.node for tr in tree.subtrees()])
         flatten_tags = []
         useful_root = list(tree.subtrees(lambda x: (x.node or x.parent().node in ('SINV', 'S', 'FRAG', 'X')) and len(x) > 1))
-        if len(useful_root) == 0:
+
+        sub_tree = useful_root[0]
+
+        if len(sub_tree) == 0:
             return False
         else:
-            sub_tree = useful_root[0]
+            if len(sub_tree) == 0:
+                return False
             for sub_sub_tree in sub_tree:
                 flatten_tags.append(tag_utils.simplify_tag(sub_sub_tree.node))
 
@@ -148,7 +152,15 @@ def contains_any_invalid_setences(sentences, invalid_sentences):
 
 
 def parse_sentences(line):
+
     log("Working on: %s" % (line,))
+
+    correct_parse = cache_get("sentence_tokenizer", line)
+    if correct_parse:
+        log("Cache Hit: %s" % (correct_parse,), 1)
+        log("-------------\n", 1)
+        return correct_parse
+
     all_possible_sentences = _possible_sentences_in_line(line)
     all_possible_sentence_probs = []
     invalid_possible_sentences = []
@@ -208,12 +220,13 @@ def parse_sentences(line):
         all_possible_sentence_probs.append(weighted_score)
     max_prob = max(all_possible_sentence_probs)
     parse_for_max_prob = all_possible_sentences[all_possible_sentence_probs.index(max_prob)]
-    log("All Probs: %s" % (all_possible_sentence_probs,), 1)
-    log("MAX Prob: %f" % (max_prob,), 1)
-    log("Parse for max prob: %s" % (parse_for_max_prob,), 1)
-    log("Best Guess Num Sentences: %d" % (len(parse_for_max_prob),))
-    log("-------------\n\n")
-    return all_possible_sentences[all_possible_sentence_probs.index(max_prob)]
+    log("All Probs: %s" % (all_possible_sentence_probs,), 2)
+    log("MAX Prob: %f" % (max_prob,), 2)
+    log("Parse for max prob: %s" % (parse_for_max_prob,), 2)
+    log("Best Guess Num Sentences: %d" % (len(parse_for_max_prob),), 1)
+    log("-------------\n\n", 1)
+    cache_set("sentence_tokenizer", line, parse_for_max_prob)
+    return parse_for_max_prob
 
 
 if __name__ == '__main__':

@@ -1,6 +1,8 @@
 import os
 from sentence_tokenizer import parse_sentences, correct_line_counts
 import essay_utils
+import math
+
 
 cols = ('1a', '1b', '1c', '1d', '2a', '2b', '3a')
 
@@ -10,11 +12,11 @@ grades = [[float(n) for n in l.split()[1:]] for l in open(os.path.join("data/gra
 def grade_essay_3a(essay_index):
     essay = essay_utils.essays[essay_index]
     num_sentences = sum([len(parse_sentences(line)) for line in essay])
-    print "Found %d lines, expected %d" % (num_sentences, sum(correct_line_counts[essay_index]))
+    print "Found %d sentences, expected %d" % (num_sentences, sum(correct_line_counts[essay_index]))
     if num_sentences >= 6:
         return 5
     else:
-        return num_sentences - 1
+        return math.floor(5 - (num_sentences / 2))
 
 
 if __name__ == '__main__':
