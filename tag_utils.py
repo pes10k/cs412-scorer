@@ -4,11 +4,13 @@ import os
 
 # Dumb global structures, just needed once through the whole
 simple_tag_subs = dict(NNS='NN', NNPS='NNP', VBD='VB', VBG='VB', VBN='VB',
-                       VBP='VB', VBZ='VBZ',
+                       VBP='VB', VBZ='VB',
 
                        # Simplify all pronouns to nouns?
                        PRP='NN')
 simple_tag_subs['PRP$'] = 'NN'
+
+tags_to_ignore = (',', '.', '``', '""', "''", ':', '#', '', '--', '-NONE-', 'POS')
 
 
 def simplify_tag(tag):
@@ -30,7 +32,6 @@ def simplify_tags(tags):
 
 
 def is_valid_tag(tag):
-    tags_to_ignore = (',', '.', '``', '""', "''", ':', '#', '', '--', '-NONE-')
     return (tag not in tags_to_ignore and (len(tag) > 1 or (ord(tag) > 64 and ord(tag) < 91)))
 
 
