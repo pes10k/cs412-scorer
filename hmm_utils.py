@@ -36,15 +36,15 @@ def store_transitions(tags):
 
 def get_transition_counts():
     file_name = 'penn_transition_counts.data'
+
     try:
-        f = open(os.path.join('cache', file_name), 'r')
+        f = open(os.path.join('cache', file_name), 'rb')
         data = pickle.load(f)
         f.close()
         return data
     except (IOError, EOFError):
         print "Building counts from Penn Treebank corpus"
-
-        f = open(os.path.join('cache', file_name), 'w')
+        f = open(os.path.join('cache', file_name), 'wb')
 
         for sentence in nltk.corpus.treebank.parsed_sents():
             all_transitions = tree_utils.transitions_in_tree(sentence)

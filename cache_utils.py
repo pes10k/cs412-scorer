@@ -25,8 +25,7 @@ def cache_get(cache_name, cache_key):
         f = open(file_path, file_mode)
         try:
             data = pickle.load(f)
-        except (IOError, EOFError) as e:
-            print e
+        except (IOError, EOFError):
             data = dict()
         mem_caches[cache_name] = data
         f.close()

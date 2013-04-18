@@ -1,5 +1,6 @@
 import stanford_parser
 import tree_utils
+from tree_utils import semi_tree_roots
 import hmm_utils
 import essay_utils
 import cmd_utils
@@ -71,45 +72,50 @@ def is_possible_sentence(tree):
     leaf_trees = tree.subtrees(lambda x: x.height() == 2)
     leaf_nodes = [n.node for n in leaf_trees]
 
-    if leaf_nodes[0] in invalid_boundary_tags or leaf_nodes[-1] in invalid_boundary_tags:
+    if leaf_nodes[0] in invalid_boundary_tags:
+        log("Rejecting sentence becuase it starts with an invalid boundry tag: %s" % (leaf_nodes[0],), 3)
+    elif leaf_nodes[-1] in invalid_boundary_tags:
+        log("Rejecting sentence becuase it ends with an invalid boundry tag: %s" % (leaf_nodes[-1],), 3)
         return False
     elif leaf_nodes[0] == "PP":
         log("Rejecting sentence because it stats with PP", 3)
         return False
     else:
-        #ordered_tags = list([tr.node for tr in tree.subtrees()])
         flatten_tags = []
-        useful_root = list(tree.subtrees(lambda x: (x.node or x.parent().node in ('SINV', 'S', 'FRAG', 'X')) and len(x) > 1))
+        useful_roots = list(tree.subtrees(lambda x: (x.node in semi_tree_roots) and len(x) > 1))
 
-        sub_tree = useful_root[0]
-
-        if len(sub_tree) == 0:
+        if len(useful_roots) == 0 or len(useful_roots[0]) == 0:
+            log("Rejecting sentence becuase can't find a useful root", 3)
             return False
+
+        sub_tree = useful_roots[0]
+
+        for sub_sub_tree in sub_tree:
+            flatten_tags.append(tag_utils.simplify_tag(sub_sub_tree.node))
+
+        sen_is_inverted = tree[0].node == "SINV"
+
+        if sen_is_inverted:
+            early_set = ("VP", "VB")
+            late_set = ("NP",)
         else:
-            if len(sub_tree) == 0:
-                return False
-            for sub_sub_tree in sub_tree:
-                flatten_tags.append(tag_utils.simplify_tag(sub_sub_tree.node))
+            early_set = ("NP", "NN")
+            late_set = ("VP", "ADJP")
 
-            if tree[0].node == "SINV":
-                first_node = ("VP", "VB")
-                second_node = "NP"
-            else:
-                first_node = ("NP", "NN")
-                second_node = "VP"
-
-            try:
-                if flatten_tags.index(first_node[0]) < flatten_tags.index(second_node):
-                # if ordered_tags.index("NP") < ordered_tags.index("VP"):
-                    return True
+        try:
+            earliest_index = min([flatten_tags.index(tag) for tag in early_set if tag in flatten_tags])
+            latest_index = max([flatten_tags.index(tag) for tag in late_set if tag in flatten_tags])
+            if earliest_index > latest_index:
+                if sen_is_inverted:
+                    log("Rejecting possible sentence because earliest NP like tag occurs before earliest VP like tag (%d vs %d)" % (earliest_index, latest_index), 3)
                 else:
-                    return flatten_tags.index(first_node[1]) < flatten_tags.index(second_node)
-            except ValueError:
-                try:
-                    return flatten_tags.index(first_node[1]) < flatten_tags.index(second_node)
-                except:
-                    return False
-            # return True
+                    log("Rejecting possible sentence because earliest VP like tag occurs before earliest NP like tag (%d vs %d) and sentence parse SINV" % (earliest_index, latest_index), 3)
+                return False
+            else:
+                return True
+        except ValueError:
+            log("Rejecting possible sentence because the head structure doesn't look like a valid parse", 3)
+            return False
 
 
 def boost_for_sentence_tree(tree):
@@ -142,15 +148,16 @@ def contains_any_invalid_setences(sentences, invalid_sentences):
     return False
 
 
-def parse_sentences(line):
+def parse_sentences(line, use_cache=True):
 
     log("Working on: %s" % (line,), 1)
 
-    correct_parse = cache_get("sentence_tokenizer", line)
-    if correct_parse:
-        log("Cache Hit: %s" % (correct_parse,), 1)
-        log("-------------\n", 1)
-        return correct_parse
+    if use_cache:
+        correct_parse = cache_get("sentence_tokenizer", line)
+        if correct_parse:
+            log("Cache Hit: %s" % (correct_parse,), 1)
+            log("-------------\n", 1)
+            return correct_parse
 
     all_possible_sentences = _possible_sentences_in_line(line)
     all_possible_sentence_probs = []
@@ -171,7 +178,16 @@ def parse_sentences(line):
                 prob_for_sentences.append(stored_probs[possible_sentence])
                 continue
 
-            sentence_tree = stanford_parser.parse(possible_sentence)[0]
+            sentence_trees = stanford_parser.parse(possible_sentence)
+            if len(sentence_trees) == 0:
+                log("Wasn't able to parse input %s" % (possible_sentence,), 0)
+                prob_for_sentences.append(0)
+                invalid_possible_sentences.append(possible_sentence)
+                sent_is_impossible = True
+                continue
+            else:
+                sentence_tree = sentence_trees[0]
+
             tree_utils.simplify_tree(sentence_tree,
                                      remove_starting_cc=possible_sentences.index(possible_sentence) == 0)
             sentence_transitions = tree_utils.transitions_in_tree(sentence_tree)
@@ -216,7 +232,9 @@ def parse_sentences(line):
     log("Parse for max prob: %s" % (parse_for_max_prob,), 2)
     log("Best Guess Num Sentences: %d" % (len(parse_for_max_prob),), 1)
     log("-------------\n\n", 1)
-    cache_set("sentence_tokenizer", line, parse_for_max_prob)
+
+    if use_cache:
+        cache_set("sentence_tokenizer", line, parse_for_max_prob)
     return parse_for_max_prob
 
 

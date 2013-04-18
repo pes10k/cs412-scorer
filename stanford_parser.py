@@ -5,7 +5,6 @@ things back into python, but thursday is pretty close so what can I do?
 import os
 from subprocess import Popen, PIPE, STDOUT
 from nltk.tree import ParentedTree
-import cPickle as pickle
 
 
 def _standford_parser_cmd():
@@ -18,7 +17,7 @@ def _standford_parser_cmd():
     return cmd_parts
 
 
-def parse(sentence):
+def parse(sentence, use_cache=True):
     p = Popen(_standford_parser_cmd(), stdin=PIPE, stdout=PIPE, stderr=STDOUT)
     response = p.communicate(input=sentence)[0]
 
@@ -27,47 +26,3 @@ def parse(sentence):
     # but we got deadlines....
     trees = [ParentedTree.parse(line) for line in response.split("\n") if len(line) > 2 and line[0] == "(" and line[-1] == ")"]
     return trees
-
-
-_parser_cache = dict(
-    cache=dict()
-)
-
-
-def cache_get(key):
-    try:
-        return _parser_cache['cache'][key]
-    except KeyError:
-        try:
-            file_name = 'stanford_parses.data'
-            f_read = open(os.path.join('cache', file_name), 'r')
-            data = pickle.load(f_read)
-            _parser_cache['cache'] = data
-            f_read.close()
-        except (IOError, KeyError):
-            return False
-
-
-def cache_set(cache_key, cache_value):
-    _parser_cache['cache']
-    file_name = 'stanford_parses.data'
-
-    if cache_key in _parser_cache['cache'] and _parser_cache['cache'][cache_key] == cache_value:
-        return False
-    try:
-        f = open(os.path.join('cache', file_name), 'r')
-        data = pickle.load(f)
-        data[cache_key] = cache_value
-        _parser_cache['cache'][cache_key] = cache_value
-        f.close()
-
-        f_write = open(os.path.join('cache', file_name), 'wb')
-        pickle.dump(data, f_write)
-        f_write.close()
-    except (IOError, EOFError):
-        f = open(os.path.join('cache', file_name), 'w')
-        data = {}
-        data[cache_key] = cache_value
-        _parser_cache['cache'][cache_key] = cache_value
-        pickle.dump(data, f)
-        f.close()
