@@ -5,6 +5,17 @@ import cPickle as pickle
 mem_caches = dict()
 
 
+def cache_del(cache_name, cache_key):
+    if cache_name not in mem_caches:
+        cache_get(cache_name, cache_key)
+    if cache_key in mem_caches[cache_name]:
+        del mem_caches[cache_name][cache_key]
+        _write_cache(cache_name)
+        return True
+    else:
+        return False
+
+
 def cache_get(cache_name, cache_key):
     if cache_name not in mem_caches:
 
@@ -28,12 +39,23 @@ def cache_get(cache_name, cache_key):
 
 def cache_set(cache_name, cache_key, cache_value):
 
-    file_name = cache_name + '.data'
-
     if cache_name not in mem_caches:
         cache_get(cache_name, cache_key)
 
     mem_caches[cache_name][cache_key] = cache_value
+    _write_cache(cache_name)
+
+
+def _write_cache(cache_name):
+    file_name = cache_name + '.data'
     f_write = open(os.path.join('cache', file_name), 'wb')
     pickle.dump(mem_caches[cache_name], f_write)
     f_write.close()
+
+
+if __name__ == "__main__":
+    from cmd_utils import cmd_arg
+    cache_key = cmd_arg('--key', None)
+    cache_name = cmd_arg('--name', None)
+    if cache_key and cache_name:
+        cache_del(cache_name, cache_key)

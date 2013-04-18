@@ -36,12 +36,10 @@ def store_transitions(tags):
 
 def get_transition_counts():
     file_name = 'penn_transition_counts.data'
-    print "using cached file " + file_name
     try:
         f = open(os.path.join('cache', file_name), 'r')
         data = pickle.load(f)
         f.close()
-        print "Successfully loaded cached tag data from Penn Treebank corpus"
         return data
     except (IOError, EOFError):
         print "Building counts from Penn Treebank corpus"

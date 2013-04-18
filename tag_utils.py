@@ -68,12 +68,10 @@ def simple_tag(tag):
 
 
 def get_cached_counts(file_name='tag_counts.data', worker_func=None):
-    print "using cached file " + file_name
     try:
         f = open(os.path.join('cache', file_name), 'r')
         data = pickle.load(f)
         f.close()
-        print "Successfully loaded cached tag data from Penn Treebank corpus"
         return data
     except (IOError, EOFError):
         import nltk.corpus

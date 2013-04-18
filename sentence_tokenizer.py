@@ -3,6 +3,7 @@ import tree_utils
 import hmm_utils
 import essay_utils
 import cmd_utils
+from cmd_utils import log
 import tag_utils
 from cache_utils import cache_get, cache_set
 
@@ -33,7 +34,6 @@ correct_line_counts = (
 counts = hmm_utils.get_transition_counts()
 essay_index = int(cmd_utils.cmd_arg('--essay', 0)) - 1
 line_index = int(cmd_utils.cmd_arg('--line', -1))
-log_level = int(cmd_utils.cmd_arg('--log', -1))
 use_stdin = cmd_utils.cmd_flag('--stdin')
 
 
@@ -43,11 +43,6 @@ weight = .01
 invalid_boundary_tags = ('IN', 'CC', 'SINV', 'RP')
 pers_pro_tags = ('PRP', 'PRP$')
 start_pers_pro_weight = 1000
-
-
-def log(line, level=0, sep=' -- '):
-    if log_level and log_level >= level:
-        print "%s %s" % (sep * level, line)
 
 
 def _possible_sentences_in_line(line, min_sentence_len=3):
@@ -140,10 +135,6 @@ def prod(nums):
     return total
 
 
-def avg_prob(nums):
-    return sum(nums)/len(nums)
-
-
 def contains_any_invalid_setences(sentences, invalid_sentences):
     for sentence in sentences:
         if sentence in invalid_sentences:
@@ -153,7 +144,7 @@ def contains_any_invalid_setences(sentences, invalid_sentences):
 
 def parse_sentences(line):
 
-    log("Working on: %s" % (line,))
+    log("Working on: %s" % (line,), 1)
 
     correct_parse = cache_get("sentence_tokenizer", line)
     if correct_parse:
@@ -245,7 +236,7 @@ if __name__ == '__main__':
 
             for line in lines:
                 sentences_for_essay.append(len(parse_sentences(line)))
-            log(" Sentence counts for essay: %s" % (sentences_for_essay,))
+            log("Sentence counts for essay: %s" % (sentences_for_essay,))
             essays_in_corpus.append(sentences_for_essay)
 
         wrong_answers = []
