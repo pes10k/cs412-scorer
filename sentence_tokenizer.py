@@ -4,7 +4,7 @@ from tree_utils import semi_tree_roots
 import hmm_utils
 import essay_utils
 import cmd_utils
-from cmd_utils import log
+from cmd_utils import log, cmd_log_level
 import tag_utils
 from cache_utils import cache_get, cache_set
 
@@ -39,9 +39,9 @@ use_stdin = cmd_utils.cmd_flag('--stdin')
 
 
 # How much to prefer long answers over shorter onces
-weight = .01
+weight = .001
 
-invalid_boundary_tags = ('IN', 'CC', 'SINV', 'RP')
+invalid_boundary_tags = ('IN', 'CC', 'SINV', 'RP', 'TO')
 pers_pro_tags = ('PRP', 'PRP$')
 start_pers_pro_weight = 1000
 
@@ -84,7 +84,7 @@ def is_possible_sentence(tree):
         flatten_tags = []
         useful_roots = list(tree.subtrees(lambda x: (x.node in semi_tree_roots) and len(x) > 1))
 
-        if len(useful_roots) == 0 or len(useful_roots[0]) == 0:
+        if len(useful_roots) == 0 or len(useful_roots[0]) < 2:
             log("Rejecting sentence becuase can't find a useful root", 3)
             return False
 
@@ -188,8 +188,19 @@ def parse_sentences(line, use_cache=True):
             else:
                 sentence_tree = sentence_trees[0]
 
+            if cmd_log_level() >= 4:
+                print "--------"
+                print "Pre Simplified Tree"
+                print sentence_tree
+
             tree_utils.simplify_tree(sentence_tree,
                                      remove_starting_cc=possible_sentences.index(possible_sentence) == 0)
+
+            if cmd_log_level() >= 4:
+                print "--------"
+                print "Post Simplified Tree"
+                print sentence_tree
+
             sentence_transitions = tree_utils.transitions_in_tree(sentence_tree)
 
             if not is_possible_sentence(sentence_tree):
@@ -211,6 +222,7 @@ def parse_sentences(line, use_cache=True):
                     sentence_probs += probs
                     log("Transitions: %s" % (transition,), 3)
                     log("Probabilities: %s" % (probs,), 3)
+
                 attempt_sentence_prob = prod(sentence_probs)
 
                 sentence_prob_boost = boost_for_sentence_tree(sentence_tree)
