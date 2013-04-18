@@ -3,6 +3,7 @@ import nltk
 from tag_utils import sets_of_tags, serialize_tags
 import cPickle as pickle
 import tree_utils
+import cmd_utils
 
 
 def prob_of_all_transitions(transitions, counts, gram_size=2):
@@ -43,7 +44,7 @@ def get_transition_counts():
         f.close()
         return data
     except (IOError, EOFError):
-        print "Building counts from Penn Treebank corpus"
+        cmd_utils.log("Building counts from Penn Treebank corpus", 1)
         f = open(os.path.join('cache', file_name), 'wb')
 
         for sentence in nltk.corpus.treebank.parsed_sents():
@@ -53,7 +54,7 @@ def get_transition_counts():
                 if len(transitions) > 1:
                     store_transitions(transitions)
 
-        print "Finished building tag counts"
+        cmd_utils.log("Finished building tag counts", 1)
         pickle.dump(store_transitions._counts, f)
         f.close()
         return store_transitions._counts

@@ -12,6 +12,8 @@ counts = hmm_utils.get_transition_counts()
 parse_stdin = cmd_utils.cmd_flag('--parse', None)
 score_stdin = cmd_utils.cmd_flag('--score', None)
 sentence_parse_stdin = cmd_utils.cmd_flag('--sen-token', None)
+word_order_parse_stdin = cmd_utils.cmd_flag('--word-order', None)
+
 
 transition_count = cmd_utils.cmd_arg('--count', None)
 transition_prob = cmd_utils.cmd_arg('--prob', None)
@@ -38,6 +40,23 @@ elif sentence_parse_stdin:
     import sentence_tokenizer
     sentences = sentence_tokenizer.parse_sentences(cmd_utils.get_stdin(), use_cache=False)
     print sentences
+elif word_order_parse_stdin:
+    import sentence_tokenizer
+    import word_order
+    text = cmd_utils.get_stdin()
+    lines = [l for l in text.split("\n") if l and len(l) > 0]
+    issues_in_text = []
+    for line in lines:
+        sentences = sentence_tokenizer.parse_sentences(line)
+        for sentence in sentences:
+            issues = word_order.issues_in_sentence(sentence, use_cache=False)
+            print sentence
+            print issues
+            issues_in_text += issues
+    print "Found %d issues" % (len(issues_in_text),)
+    print "Issues: %s" % (issues_in_text,)
+
+
 elif transition_count:
     print "Count: %d" % (counts[transition_count],)
 elif transition_prob:

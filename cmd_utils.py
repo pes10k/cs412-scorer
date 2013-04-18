@@ -7,7 +7,8 @@ def log(line, level=0, sep=' -- '):
 
 
 def get_stdin():
-    return "".join(sys.stdin).strip()
+    lines = list(sys.stdin)
+    return "\n".join([l.strip() for l in lines])
 
 
 def cmd_flag(name, default=None):
@@ -19,6 +20,12 @@ def cmd_arg(name, default=None):
         return sys.argv[sys.argv.index(name) + 1]
     except (ValueError, IndexError):
         return default
+
+
+def cmd_test():
+    if not hasattr(cmd_test, '_test_cmd_arg'):
+        cmd_test._test_cmd_arg = cmd_arg('--test', None)
+    return cmd_test._test_cmd_arg
 
 
 def cmd_log_level():

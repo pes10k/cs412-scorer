@@ -1,5 +1,6 @@
 import os
 import cPickle as pickle
+from cmd_utils import log
 
 
 mem_caches = dict()
@@ -31,7 +32,9 @@ def cache_get(cache_name, cache_key):
         f.close()
 
     try:
-        return mem_caches[cache_name][cache_key]
+        rs = mem_caches[cache_name][cache_key]
+        log('Cache Hit: %s[%s]' % (cache_name, cache_key), 5)
+        return rs
     except KeyError:
         return None
 

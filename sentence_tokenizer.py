@@ -39,7 +39,7 @@ use_stdin = cmd_utils.cmd_flag('--stdin')
 
 
 # How much to prefer long answers over shorter onces
-weight = .001
+weight = .0001
 
 invalid_boundary_tags = ('IN', 'CC', 'SINV', 'RP', 'TO')
 pers_pro_tags = ('PRP', 'PRP$')
@@ -49,7 +49,7 @@ start_pers_pro_weight = 1000
 def _possible_sentences_in_line(line, min_sentence_len=3):
     # The simplest thing here is to defer to the paper.  If it looks like they've
     # added punctuation already, lets just use that
-    has_abbr = sum([1 if word[-1] == "." and word.count(".") > 1 else 0 for word in line.split(" ")])
+    has_abbr = sum([1 if len(word) > 0 and word[-1] == "." and word.count(".") > 1 else 0 for word in line.split(" ")])
     if not has_abbr and line.count(". ") > 0:
         return [line.split(". ")]
 
@@ -148,15 +148,23 @@ def contains_any_invalid_setences(sentences, invalid_sentences):
     return False
 
 
+def parse(text, use_cache=True):
+    lines = text.split("\n")
+    sentences = []
+    for line in lines:
+        sentences += parse_sentences(line, use_cache=use_cache)
+    return sentences
+
+
 def parse_sentences(line, use_cache=True):
 
-    log("Working on: %s" % (line,), 1)
+    log("Working on: %s" % (line,), 2)
 
     if use_cache:
         correct_parse = cache_get("sentence_tokenizer", line)
         if correct_parse:
-            log("Cache Hit: %s" % (correct_parse,), 1)
-            log("-------------\n", 1)
+            log("Cache Hit: %s" % (correct_parse,), 2)
+            log("-------------\n", 2)
             return correct_parse
 
     all_possible_sentences = _possible_sentences_in_line(line)

@@ -2,26 +2,14 @@ import stanford_parser
 import essay_utils
 import tree_utils
 import hmm_utils
-from cmd_utils import cmd_essay_index
+from cmd_utils import cmd_essay_index, cmd_log_level, log
 from sentence_tokenizer import parse_sentences
-from pprint import pprint
-
-
-correct_scores = (
-    (0, 0, 0, 0, 0, 0, 0,),
-)
-
-
-counts = hmm_utils.get_transition_counts()
+from cache_utils import cache_get, cache_set
 
 
 def tags_appear_in_order(haystack, needles):
-    needle_len = len(needles)
-    for i in range(0, len(haystack) - needle_len + 1):
-        if haystack[i] == needles[0]:
-            if needles[1] in haystack[i+1:]:
-                return True
-    return False
+    indexes = [haystack.index(n) for n in needles if n in haystack]
+    return sorted(indexes) == indexes
 
 
 def num_tag_order_errors(tree, sub_tree_nodes, tags):
@@ -40,7 +28,10 @@ def num_tag_order_errors(tree, sub_tree_nodes, tags):
 
 
 def num_forbidden_orders(tree, sub_tree_nodes, tags):
-    sub_trees = list(tree.subtrees(lambda x: x.node in sub_tree_nodes))
+
+    # Note that we flag nodes that have mis ordered children, so that we don't
+    # double count the same error twice
+    sub_trees = list(tree.subtrees(lambda x: x.node in sub_tree_nodes and not hasattr(x, '_has_error')))
     num_errors = 0
     if len(sub_trees) > 0:
         num_tags = len(tags)
@@ -50,6 +41,9 @@ def num_forbidden_orders(tree, sub_tree_nodes, tags):
             # print sub_trees_nodes
             num_missing_tags = sum([0 if tags[i] in sub_trees_nodes else 1 for i in range(0, num_tags)])
             if num_missing_tags == 0 and tags_appear_in_order(sub_trees_nodes, tags):
+
+                # Add Flag to not over count errors
+                a_tree._has_error = True
                 num_errors += 1
     return num_errors
 
@@ -64,7 +58,7 @@ def num_forbidden_orders(tree, sub_tree_nodes, tags):
 # )
 
 
-def num_order_issues(sentence):
+def issues_in_sentence(sentence, use_cache=True):
     """'Brute force' check for a bunch of possible word ordering issues.
     Specifically, looking for the following:
         - VP coming before NP in standard sentence
@@ -76,82 +70,107 @@ def num_order_issues(sentence):
         - NN before CD in NP
         - NNP before CD in NP
     """
-    tree = stanford_parser.parse(sentence)[0]
-    print tree
+    if use_cache:
+        result = cache_get('word_order_issues', sentence)
+        if result is not None:
+            return result
 
+    tree = stanford_parser.parse(sentence)[0]
     tree_utils.simplify_tree(tree, trim_adjecent_prop_nouns=True,
                              normalize_sent_roots=True,
                              normalize_plural=True,
                              normalize_case=True)
-    print sentence
-    print tree
-    problem_counts = []
-    problem_counts += ["VP->NP in S"] * num_forbidden_orders(tree, ("S",), ('VP', 'NP'))
-    problem_counts += ["NP->VP in SINV"] * num_forbidden_orders(tree, ('SINV',), ('NP', 'VP'))
-    problem_counts += ["NN->JJ in NP"] * num_forbidden_orders(tree, ('NP',), ('NN', 'JP'))
 
-    problem_counts += ["PP->VB in VP"] * num_forbidden_orders(tree, ('VP',), ('PP', 'VB'))
-    problem_counts += ["NP->VP in VP"] * num_forbidden_orders(tree, ('VP',), ('NP', 'VP'))
+    log("Looking for order issues in: %s" % (sentence,), 1)
+    if cmd_log_level() >= 4:
+        print "Simplified Parse Tree"
+        print tree
 
-    problem_counts += ["S->VP in S"] * num_forbidden_orders(tree, ('S',), ('S', 'VP'))
+    problems = []
+    problems += ["VP->NP in S"] * num_forbidden_orders(tree, ("S",), ('VP', 'NP'))
+    problems += ["NP->VP in SINV"] * num_forbidden_orders(tree, ('SINV',), ('NP', 'VP'))
+    problems += ["NN->JJ in NP"] * num_forbidden_orders(tree, ('NP',), ('NN', 'JP'))
 
-    problem_counts += ["S->VB in VP"] * num_forbidden_orders(tree, ('VP',), ('S', 'VB'))
-    # problem_counts += ["VB->VP in VP"] * num_forbidden_orders(tree, ('VP',), ('VB', 'VP'))
+    problems += ["PP->VB in VP"] * num_forbidden_orders(tree, ('VP',), ('PP', 'VB'))
+    problems += ["NP->VP in VP"] * num_forbidden_orders(tree, ('VP',), ('NP', 'VP'))
+
+    problems += ["S->VP in S"] * num_forbidden_orders(tree, ('S',), ('S', 'VP'))
+
+    problems += ["S->VB in VP"] * num_forbidden_orders(tree, ('VP',), ('S', 'VB'))
+    # problems += ["VB->VP in VP"] * num_forbidden_orders(tree, ('VP',), ('VB', 'VP'))
+
+    problems += ["NP->RBR in ADVP"] * num_forbidden_orders(tree, ('ADVP',), ('NP', 'RBR'))
+    problems += ["NN->DT in NP"] * num_forbidden_orders(tree, ('NP',), ('NN', 'DT'))
+    problems += ["NNP->DT in NP"] * num_forbidden_orders(tree, ('NP',), ('NNP', 'DT'))
+    problems += ["NN->CD in NP"] * num_forbidden_orders(tree, ('NP',), ('NN', 'CD'))
+    problems += ["NNP->CD in NP"] * num_forbidden_orders(tree, ('NP',), ('NNP', 'CD'))
+
+    problems += ['PP->NP in S'] * num_forbidden_orders(tree, ('S',), ('PP', 'NP'))
+
+    # Toggle?
+    problems += ['NP->VP in NP'] * num_forbidden_orders(tree, ('NP',), ('NP', 'VP'))
+
+    # Seems like it should be VB->ADVP->PP
+    problems += ['VB->PP->ADVP in VP'] * num_forbidden_orders(tree, ('VP',), ('VB', 'PP', 'ADVP'))
+    problems += ['VB->PP->SBAR in VP'] * num_forbidden_orders(tree, ('VP',), ('VB', 'PP', 'SBAR'))
+
+    problems += ['NP->S in NP'] * num_forbidden_orders(tree, ('NP',), ('NP', 'S'))
+
+    # Seems like the ADJP should be in a NP or somewhere else, not a sibling
+    # of a noun phrase
+    problems += ['NP->ADJP in S'] * num_forbidden_orders(tree, ('S',), ('NP', 'ADJP'))
+
+    # Last, if there is an S w/ only one child, we call it a word order problem...
+    problems += ['Single Child S'] * len(list(tree.subtrees(lambda x: x in tree_utils.semi_tree_roots and len(x) == 1)))
+
+    if tree[0].node not in tree_utils.semi_tree_roots and not hasattr(tree[0], '_has_error'):
+        tree[0]._has_error = True
+        problems += ['No S Root']
+
+    log("Found %d order issues" % (len(problems),), 1)
+    log("Issues: %s", (problems,), 2)
+
+    if use_cache:
+        cache_set('word_order_issues', sentence, problems)
+
+    return problems
 
 
-    problem_counts += ["NP->RBR in ADVP"] * num_forbidden_orders(tree, ('ADVP',), ('NP', 'RBR'))
-    problem_counts += ["NN->DT in NP"] * num_forbidden_orders(tree, ('NP',), ('NN', 'DT'))
-    problem_counts += ["NNP->DT in NP"] * num_forbidden_orders(tree, ('NP',), ('NNP', 'DT'))
-    problem_counts += ["NN->CD in NP"] * num_forbidden_orders(tree, ('NP',), ('NN', 'CD'))
-    problem_counts += ["NNP->CD in NP"] * num_forbidden_orders(tree, ('NP',), ('NNP', 'CD'))
+# def transition_stats(sentence):
+#     """Calculates HMM based probabilities base on the transitions in the parse
+#     tree"""
 
-    problem_counts += ['PP->NP in S'] * num_forbidden_orders(tree, ('S',), ('PP', 'NP'))
+#     sentence_tree = stanford_parser.parse(sentence)[0]
+#     tree_utils.simplify_tree(sentence_tree, trim_adjecent_prop_nouns=True,
+#                              normalize_sent_roots=True)
+#     transitions = tree_utils.transitions_in_tree(sentence_tree)
 
-    return problem_counts
+#     product = 1
+#     probs = []
+#     for transition in transitions:
+#         transition_probs = hmm_utils.prob_of_all_transitions(transition, counts, gram_size=3)
+#         for a_prob in transition_probs:
+#             product *= a_prob
+#             probs.append(a_prob)
 
+#     stats = dict(
+#         min=min(probs),
+#         avg=sum(probs)/len(probs),
+#         prod=product
+#     )
+#     return stats
 
-def transition_stats(sentence):
-    """Calculates HMM based probabilities base on the transitions in the parse
-    tree"""
-    sentence_tree = stanford_parser.parse(sentence)[0]
-    tree_utils.simplify_tree(sentence_tree, trim_adjecent_prop_nouns=True,
-                             normalize_sent_roots=True)
-    transitions = tree_utils.transitions_in_tree(sentence_tree)
-
-    product = 1
-    probs = []
-    for transition in transitions:
-        transition_probs = hmm_utils.prob_of_all_transitions(transition, counts, gram_size=3)
-        for a_prob in transition_probs:
-            product *= a_prob
-            probs.append(a_prob)
-
-    stats = dict(
-        min=min(probs),
-        avg=sum(probs)/len(probs),
-        prod=product
-    )
-    return stats
-
-
-def np_vp_order_check(tree):
-    wrong = 0
-    print tree
-    for st in tree.subtrees():
-        try:
-            node_1 = st[0]
-            node_2 = st[1]
-            # print "Comparing Nodes (%s, %s)" % (node_1.node, node_2.node)
-            if node_1.node == "VP" and node_2.node == "NP":
-                wrong += 1
-        except IndexError:
-            pass
-    return wrong
 
 if __name__ == "__main__":
 
     essay_index = cmd_essay_index()
     for essay in [essay_utils.essays[essay_index]]:
+        issues_in_text = []
         for line in essay:
+            issues_in_line = []
             for sentence in parse_sentences(line):
-                print num_order_issues(sentence)
+                issues_in_sentence = issues_in_sentence(sentence)
+                issues_in_text += issues_in_sentence
+                issues_in_line += issues_in_sentence
+    print issues_in_text
+
