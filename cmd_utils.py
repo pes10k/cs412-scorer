@@ -11,6 +11,10 @@ def get_stdin():
     return "\n".join([l.strip() for l in lines])
 
 
+def get_stdin_lines():
+    return [l for l in get_stdin().split("\n") if l and len(l) > 0]
+
+
 def cmd_flag(name, default=None):
     return name in sys.argv
 

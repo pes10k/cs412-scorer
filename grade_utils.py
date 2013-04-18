@@ -6,7 +6,7 @@ from cmd_utils import log
 
 
 cols = ('1a', '1b', '1c', '1d', '2a', '2b', '3a')
-
+implemented_grades = ('1a', '3a')
 grades = [[float(n) for n in l.split()[1:]] for l in open(os.path.join("data/grades.txt")).readlines()[::-1][:-5]]
 
 
@@ -51,7 +51,7 @@ def grade_3a(text):
     if num_sentences >= 6:
         return 5
     else:
-        return num_sentences - 1
+        return max(num_sentences - 1, 1)
 
 
 if __name__ == '__main__':

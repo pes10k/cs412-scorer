@@ -9,8 +9,10 @@ counts = hmm_utils.get_transition_counts()
 
 # Flags that note that incode should be looked for in STDIN instead of
 # in a test essay file
+final_score_stdin = cmd_utils.cmd_flag('--final-score', None)
 parse_stdin = cmd_utils.cmd_flag('--parse', None)
 score_stdin = cmd_utils.cmd_flag('--score', None)
+agreement_stdin = cmd_utils.cmd_flag('--agree', None)
 sentence_parse_stdin = cmd_utils.cmd_flag('--sen-token', None)
 word_order_parse_stdin = cmd_utils.cmd_flag('--word-order', None)
 
@@ -43,8 +45,7 @@ elif sentence_parse_stdin:
 elif word_order_parse_stdin:
     import sentence_tokenizer
     import word_order
-    text = cmd_utils.get_stdin()
-    lines = [l for l in text.split("\n") if l and len(l) > 0]
+    lines = cmd_utils.get_stdin_lines()
     issues_in_text = []
     for line in lines:
         sentences = sentence_tokenizer.parse_sentences(line)
@@ -55,8 +56,15 @@ elif word_order_parse_stdin:
             issues_in_text += issues
     print "Found %d issues" % (len(issues_in_text),)
     print "Issues: %s" % (issues_in_text,)
-
-
+elif agreement_stdin:
+    import agreement_utils
+    text = cmd_utils.get_stdin().strip()
+    agreement_utils.parse(text)
+elif final_score_stdin:
+    import grade_utils
+    text = cmd_utils.get_stdin().strip()
+    for grade_type in grade_utils.implemented_grades:
+        print "%s: %d" % (grade_type, grade_utils.grade_text(text, grade_type))
 elif transition_count:
     print "Count: %d" % (counts[transition_count],)
 elif transition_prob:
