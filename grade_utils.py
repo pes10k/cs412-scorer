@@ -2,11 +2,12 @@ import os
 import sentence_tokenizer
 import word_order
 import essay_utils
+from math import floor
 from cmd_utils import log
 
 
 cols = ('1a', '1b', '1c', '1d', '2a', '2b', '3a')
-implemented_grades = ('1a', '3a')
+implemented_grades = ('1a', '1b', '1c', '3a')
 grades = [[float(n) for n in l.split()[1:]] for l in open(os.path.join("data/grades.txt")).readlines()[::-1][:-5]]
 
 
@@ -23,6 +24,10 @@ def grade_text(text, grade_type):
         return grade_3a(text)
     elif grade_type == "1a":
         return grade_1a(text)
+    elif grade_type == '1b':
+        return grade_1b(text)
+    elif grade_type == '1c':
+        return grade_1c(text)
 
 
 def grade_1a(text):
@@ -45,6 +50,25 @@ def grade_1a(text):
         return 1
 
 
+def grade_1b(text):
+    import agreement_utils
+    rs = agreement_utils.parse(text)
+    num_agreements, num_non_agreements, num_unsure = rs
+    num_agreements_tested = sum(rs)
+    if num_agreements_tested == 0:
+        log("No possible agreements found in text", 2)
+        return 0
+    else:
+        log("Sub Scores: %s" % (rs,), 2)
+        prob = float(num_agreements) / sum(rs)
+        log("%d/%d -> %f" % (num_agreements, sum(rs), prob), 2)
+        return floor(prob * 5)
+
+
+def grade_1c(text):
+    return "Unimplemented"
+
+
 def grade_3a(text):
     sentences = sentence_tokenizer.parse(text)
     num_sentences = len(sentences)
@@ -53,12 +77,11 @@ def grade_3a(text):
     else:
         return max(num_sentences - 1, 1)
 
-
 if __name__ == '__main__':
     import cmd_utils
 
     tests = cmd_utils.cmd_test()
-    tests = [tests] if tests else ('1a', '3a')
+    tests = [tests] if tests else ('1a', '1b', '3a')
     essay_index = int(cmd_utils.cmd_arg('--essay', 0)) - 1
 
     for test in tests:

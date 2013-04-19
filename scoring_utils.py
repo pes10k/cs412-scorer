@@ -59,12 +59,22 @@ elif word_order_parse_stdin:
 elif agreement_stdin:
     import agreement_utils
     text = cmd_utils.get_stdin().strip()
-    agreement_utils.parse(text)
+    print agreement_utils.parse(text)
 elif final_score_stdin:
     import grade_utils
     text = cmd_utils.get_stdin().strip()
+
+    print "Grading"
+    print "----------"
+    print text
+    print "----------\n"
     for grade_type in grade_utils.implemented_grades:
-        print "%s: %d" % (grade_type, grade_utils.grade_text(text, grade_type))
+        grade_for_test = grade_utils.grade_text(text, grade_type)
+        if isinstance(grade_for_test, str):
+            print "%s: %s" % (grade_type, grade_for_test)
+        else:
+            print "%s: %d" % (grade_type, grade_for_test)
+    print "\n"
 elif transition_count:
     print "Count: %d" % (counts[transition_count],)
 elif transition_prob:
