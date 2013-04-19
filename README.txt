@@ -1,6 +1,6 @@
 project 1 for CS421 - University of Illinois at Chicago
-Name1 psnyde2(at)uic.edu
-Name2 netid2(at)uic.edu
+Name1 Peter Snyder  <psnyde2(at)uic.edu>
+Name2 Diana Roberts <di.rob912(at)gmail.com>
 -------------------------------------------------------------------------
 --->SETUP<---------------------------------------------------------------
 
@@ -17,6 +17,18 @@ http://nltk.org/data.html).
 You'll also need a bash environment with a java environment recent
 enough to run the Stanford Parser.  The parser files are included
 with this project / archive.
+
+You'll also need the Stanford Parser, available here
+http://nlp.stanford.edu/software/stanford-parser-2013-04-05.zip
+It should be unpacked and included in the contrib/ directory of this
+project, so that the main parser jar file can be found at
+
+    contrib/stanford-parser/stanford-parser.jar
+
+The other files that come with the standford parser should also be included
+in the contrib/stanford-parser directory too.  The point is just to rename
+whatever directory name the latest version of the Stanford Parser unzips
+and to name it 'stanford-parser' in the contrib directory
 
 Last, the program uses STDIN to determine what text to grade, so a unix
 line environment that can do input redirection is needed.
