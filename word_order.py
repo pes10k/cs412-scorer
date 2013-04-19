@@ -1,7 +1,6 @@
 import stanford_parser
 import essay_utils
 import tree_utils
-import hmm_utils
 from cmd_utils import cmd_essay_index, cmd_log_level, log
 from sentence_tokenizer import parse_sentences
 from cache_utils import cache_get, cache_set
