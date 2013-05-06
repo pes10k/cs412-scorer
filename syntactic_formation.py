@@ -51,6 +51,7 @@ def parse(text):
                 bad_tag_problems = num_tag_problems(tree)
                 log("Found {0} X or FRAG tags".format(bad_tag_problems), 3)
 
+
                 bad_sbar_problems = num_sbar_problems(tree)
                 log("Found {0} bad SBAR issues".format(bad_sbar_problems), 3)
 

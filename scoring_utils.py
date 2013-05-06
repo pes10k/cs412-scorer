@@ -5,6 +5,12 @@ import hmm_utils
 import cmd_utils
 import parsers
 
+
+def round_to(n, precission):
+    correction = 0.5 if n >= 0 else -0.5
+    return int(n/precission+correction)*precission
+
+
 counts = hmm_utils.get_transition_counts()
 
 # Flags that note that incode should be looked for in STDIN instead of
@@ -91,12 +97,25 @@ elif final_score_stdin:
     print "----------"
     print text
     print "----------\n"
+
+    total = 0
+
     for grade_type in grade_utils.implemented_grades:
         grade_for_test = grade_utils.grade_text(text, grade_type)
         if isinstance(grade_for_test, str):
             print "%s: %s" % (grade_type, grade_for_test)
         else:
             print "%s: %d" % (grade_type, grade_for_test)
+
+        if grade_type == "1d":
+            total += int(grade_for_test) * 2
+        elif grade_type == "2b":
+            total += int(grade_for_test) * 3
+        else:
+            total += int(grade_for_test)
+
+    weighted_total = float(total) / 10
+    print "Weighed Total: %s" % (round_to(weighted_total, 0.5),)
     print "\n"
 elif transition_count:
     print "Count: %d" % (counts[transition_count],)

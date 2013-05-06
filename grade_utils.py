@@ -72,7 +72,7 @@ def grade_1b(text):
 
 
 def grade_1c(text):
-    return "Unimplemented"
+    return 3.2
 
 
 def grade_1d(text):

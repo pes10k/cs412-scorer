@@ -10,7 +10,7 @@ stemmer = PorterStemmer()
 noun_tags = ('NN', 'NNS',)
 
 
-work_words = ('work', 'school', 'school', 'student', 'boss')
+work_words = ('work', 'school', 'student', 'boss')
 family_words = ('family', 'mom', 'dad', 'cousins', 'aunt', 'uncle', 'mother', 'father', 'husband', 'wife', 'son', 'daughter', 'brother', 'sister', 'children', 'boyfriend', 'girlfriend', 'children', 'child', 'i')
 root_words = family_words
 
