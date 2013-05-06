@@ -35,6 +35,31 @@ def store_transitions(tags):
             store_transitions._counts[serialized] += 1
 
 
+def get_leaf_transitions():
+    file_name = 'penn_leaf_transition_counts.data'
+
+    try:
+        f = open(os.path.join('cache', file_name), 'rb')
+        data = pickle.load(f)
+        f.close()
+        return data
+    except (IOError, EOFError):
+        from tag_utils import is_valid_tag
+        cmd_utils.log("Building leaf counts from Penn Treebank corpus", 1)
+        f = open(os.path.join('cache', file_name), 'wb')
+
+        for sentence in nltk.corpus.treebank.parsed_sents():
+            leaves = list(sentence.subtrees(lambda x: len(x) > 0 and isinstance(x[0], basestring)))
+            leaves = [n[0].node.split("-")[0] for n in leaves if n.node not in is_valid_tag(n[0].node)]
+            leaves = ['START'] + leaves
+
+        cmd_utils.log("Finished building tag counts", 1)
+        pickle.dump(store_transitions._counts, f)
+        f.close()
+        return store_transitions._counts
+
+
+
 def get_transition_counts():
     file_name = 'penn_transition_counts.data'
 

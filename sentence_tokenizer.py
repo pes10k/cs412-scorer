@@ -1,4 +1,4 @@
-import stanford_parser
+import parsers
 import tree_utils
 from tree_utils import semi_tree_roots
 import hmm_utils
@@ -148,24 +148,24 @@ def contains_any_invalid_setences(sentences, invalid_sentences):
     return False
 
 
-def parse(text, use_cache=True):
+def parse(text, use_cache=True, include_prob=False):
     lines = text.split("\n")
     sentences = []
     for line in lines:
-        sentences += parse_sentences(line, use_cache=use_cache)
+        sentences += parse_sentences(line, use_cache=use_cache, include_prob=include_prob)
     return sentences
 
 
-def parse_sentences(line, use_cache=True):
+def parse_sentences(line, use_cache=True, include_prob=False):
 
     log("Working on: %s" % (line,), 2)
 
     if use_cache:
         correct_parse = cache_get("sentence_tokenizer", line)
         if correct_parse:
-            log("Cache Hit: %s" % (correct_parse,), 2)
-            log("-------------\n", 2)
-            return correct_parse
+            log("Cache Hit: %s" % (correct_parse[0],), 4)
+            log("-------------\n", 4)
+            return correct_parse if include_prob else correct_parse[0]
 
     all_possible_sentences = _possible_sentences_in_line(line)
     all_possible_sentence_probs = []
@@ -179,6 +179,14 @@ def parse_sentences(line, use_cache=True):
         sent_is_impossible = False
 
         for possible_sentence in possible_sentences:
+
+            if use_cache:
+                possible_sentence_prob = cache_get('possible_sentences', possible_sentence)
+                if possible_sentence_prob is not None:
+                    log("Cache Hit: %s (from %s)" % (possible_sentence, 'possible sentences'), 4)
+                    prob_for_sentences.append(possible_sentence_prob)
+                    continue
+
             if contains_any_invalid_setences(possible_sentences, invalid_possible_sentences) or sent_is_impossible:
                 prob_for_sentences.append(0)
                 continue
@@ -186,7 +194,7 @@ def parse_sentences(line, use_cache=True):
                 prob_for_sentences.append(stored_probs[possible_sentence])
                 continue
 
-            sentence_trees = stanford_parser.parse(possible_sentence)
+            sentence_trees = parsers.parse(possible_sentence)
             if len(sentence_trees) == 0:
                 log("Wasn't able to parse input %s" % (possible_sentence,), 0)
                 prob_for_sentences.append(0)
@@ -217,6 +225,8 @@ def parse_sentences(line, use_cache=True):
                 prob_for_sentences.append(0)
                 invalid_possible_sentences.append(possible_sentence)
                 sent_is_impossible = True
+                if use_cache:
+                    cache_set('possible_sentences', possible_sentence, 0)
             else:
                 log("%s" % (sentence_transitions,), 2)
                 sentence_probs = []
@@ -238,7 +248,8 @@ def parse_sentences(line, use_cache=True):
 
                 prob_for_sentences.append(attempt_sentence_prob)
                 stored_probs[possible_sentence] = attempt_sentence_prob
-
+                if use_cache:
+                    cache_set('possible_sentences', possible_sentence, attempt_sentence_prob)
         weighted_score = prod(prob_for_sentences) * (weight ** (len(possible_sentences) - 1))
         if weighted_score > 0:
             log("Valid Parse: %s" % (possible_sentences,), 2)
@@ -254,8 +265,8 @@ def parse_sentences(line, use_cache=True):
     log("-------------\n\n", 1)
 
     if use_cache:
-        cache_set("sentence_tokenizer", line, parse_for_max_prob)
-    return parse_for_max_prob
+        cache_set("sentence_tokenizer", line, (parse_for_max_prob, max_prob))
+    return (parse_for_max_prob, max_prob) if include_prob else parse_for_max_prob
 
 
 if __name__ == '__main__':

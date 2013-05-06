@@ -1,5 +1,5 @@
 import sentence_tokenizer
-import stanford_parser
+import parsers
 import tree_utils
 from cmd_utils import log
 import cache_utils
@@ -180,8 +180,8 @@ def parse(text, use_cache=True):
 
             log("Looking for Sub-Verb agreement in '%s'" % (sentence,), 1)
 
-            tree = stanford_parser.parse(sentence)[0]
-            dependencies = stanford_parser.dependences(sentence)
+            tree = parsers.parse(sentence)[0]
+            dependencies = parsers.dependences(sentence)
             sub_verb_deps = [dep for dep in dependencies if dep['dep_name'] == 'nsubj']
 
             if len(sub_verb_deps) == 0:

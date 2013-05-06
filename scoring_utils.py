@@ -3,7 +3,7 @@ package's functionality"""
 
 import hmm_utils
 import cmd_utils
-import stanford_parser
+import parsers
 
 counts = hmm_utils.get_transition_counts()
 
@@ -12,6 +12,8 @@ counts = hmm_utils.get_transition_counts()
 final_score_stdin = cmd_utils.cmd_flag('--final-score', None)
 parse_stdin = cmd_utils.cmd_flag('--parse', None)
 score_stdin = cmd_utils.cmd_flag('--score', None)
+pronoun_stdin = cmd_utils.cmd_flag('--pronoun', None)
+syntactic_formation_stdin = cmd_utils.cmd_flag('--syn-formation', None)
 agreement_stdin = cmd_utils.cmd_flag('--agree', None)
 sentence_parse_stdin = cmd_utils.cmd_flag('--sen-token', None)
 word_order_parse_stdin = cmd_utils.cmd_flag('--word-order', None)
@@ -23,7 +25,7 @@ transition_prob = cmd_utils.cmd_arg('--prob', None)
 
 if score_stdin or parse_stdin:
     import tree_utils
-    trees = stanford_parser.parse(cmd_utils.get_stdin())
+    trees = parsers.parse(cmd_utils.get_stdin())
     for tree in trees:
         print tree
         if score_stdin:
@@ -56,10 +58,26 @@ elif word_order_parse_stdin:
             issues_in_text += issues
     print "Found %d issues" % (len(issues_in_text),)
     print "Issues: %s" % (issues_in_text,)
+elif syntactic_formation_stdin:
+    import syntactic_formation
+    import math
+    text = cmd_utils.get_stdin().strip()
+    sentence_problems = syntactic_formation.parse(text)
+    num_sentences_with_problems = sum([1 if count > 0 else 0 for count in sentence_problems])
+    num_sentences = len(sentence_problems)
+    print "Num Sentences: {0}".format(num_sentences)
+    print "Num Problems: {0}".format(sum(sentence_problems))
+    print "Sentences with problems: {0}".format(num_sentences_with_problems)
+    print "Percent Correct: {0}/{1} ({2})".format(num_sentences - num_sentences_with_problems, num_sentences, 1 - (float(num_sentences_with_problems)/num_sentences))
+    print "Score: {0}".format(math.floor((1 - (float(num_sentences_with_problems)/num_sentences)) * 5))
 elif agreement_stdin:
     import agreement_utils
     text = cmd_utils.get_stdin().strip()
     print agreement_utils.parse(text)
+elif pronoun_stdin:
+    import text_coherence
+    text = cmd_utils.get_stdin().strip()
+    print text_coherence.parse(text)
 elif final_score_stdin:
     import grade_utils
     text = cmd_utils.get_stdin().strip()

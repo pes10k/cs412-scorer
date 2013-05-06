@@ -4,6 +4,19 @@ from cmd_utils import log
 semi_tree_roots = ('SINV', 'S', 'FRAG', 'X')
 
 
+def child_tags(tree):
+    return [subtree.node for subtree in tree]
+
+
+def nearest_root(tree):
+    if tree.parent().node == "ROOT":
+        return None
+    elif tree.parent().node in semi_tree_roots:
+        return tree.parent().node
+    else:
+        return nearest_root(tree.parent())
+
+
 def simplify_tree(tree, remove_starting_cc=False, trim_adjecent_prop_nouns=False,
                   normalize_sent_roots=False, normalize_case=False,
                   normalize_plural=False,
@@ -77,6 +90,17 @@ def simplify_tree(tree, remove_starting_cc=False, trim_adjecent_prop_nouns=False
                 sbar_tree.remove(sbar_child)
                 sbar_parent.insert(index, sbar_child)
                 log("Collapsed SBAR", 2)
+
+
+def lexical_rules(tree, cutoff=0):
+    bad_tags = ('X', 'FRAG', 'ROOT')
+    rules = dict()
+    for subtree in tree.subtrees(lambda x: is_valid_tag(x.node) and len(x) > 0 and x.node.split('-')[0] not in bad_tags):
+        productions = [n.node.split('-')[0] for n in subtree if not isinstance(n, str) and is_valid_tag(n.node) and len(subtree) > 0]
+        if len(productions) > 0 and len(set(bad_tags).intersection(productions)) == 0:
+            prod = (subtree.node.split('-')[0], tuple(productions))
+            rules[prod] = rules.get(prod, 0) + 1
+    return rules
 
 
 def transitions_in_tree(tree):

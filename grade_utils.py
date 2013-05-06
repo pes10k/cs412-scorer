@@ -7,7 +7,7 @@ from cmd_utils import log
 
 
 cols = ('1a', '1b', '1c', '1d', '2a', '2b', '3a')
-implemented_grades = ('1a', '1b', '1c', '3a')
+implemented_grades = ('1a', '1b', '1c', '1d', '3a')
 grades = [[float(n) for n in l.split()[1:]] for l in open(os.path.join("data/grades.txt")).readlines()[::-1][:-5]]
 
 
@@ -28,6 +28,8 @@ def grade_text(text, grade_type):
         return grade_1b(text)
     elif grade_type == '1c':
         return grade_1c(text)
+    elif grade_type == '1d':
+        return grade_1d(text)
 
 
 def grade_1a(text):
@@ -69,6 +71,16 @@ def grade_1c(text):
     return "Unimplemented"
 
 
+def grade_1d(text):
+    import syntactic_formation
+    import math
+    sentence_problems = syntactic_formation.parse(text)
+    num_sentences_with_problems = sum([1 if count > 0 else 0 for count in sentence_problems])
+    num_sentences = len(sentence_problems)
+    score = max(0, math.floor((1 - (float(num_sentences_with_problems)/num_sentences)) * 5))
+    return score
+
+
 def grade_3a(text):
     sentences = sentence_tokenizer.parse(text)
     num_sentences = len(sentences)
@@ -98,5 +110,5 @@ if __name__ == '__main__':
                 received_grade = grade_text(essay_text, test)
                 expected_grade = correct_essay_grade(i, test)
                 diff = received_grade - expected_grade
-                print " | ".join([str(s) for s in [(i + 1), expected_grade, received_grade, diff]])
+                print " | ".join([str(s) for s in [(i + 1), expected_grade, received_grade, diff, abs(diff)]])
             print "\n\n"

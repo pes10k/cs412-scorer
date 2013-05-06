@@ -1,4 +1,4 @@
-import stanford_parser
+import parsers
 import essay_utils
 import tree_utils
 from cmd_utils import cmd_essay_index, cmd_log_level, log
@@ -74,7 +74,7 @@ def issues_in_sentence(sentence, use_cache=True):
         if result is not None:
             return result
 
-    tree = stanford_parser.parse(sentence)[0]
+    tree = parsers.parse(sentence)[0]
     tree_utils.simplify_tree(tree, trim_adjecent_prop_nouns=True,
                              normalize_sent_roots=True,
                              normalize_plural=True,
@@ -135,31 +135,6 @@ def issues_in_sentence(sentence, use_cache=True):
     return problems
 
 
-# def transition_stats(sentence):
-#     """Calculates HMM based probabilities base on the transitions in the parse
-#     tree"""
-
-#     sentence_tree = stanford_parser.parse(sentence)[0]
-#     tree_utils.simplify_tree(sentence_tree, trim_adjecent_prop_nouns=True,
-#                              normalize_sent_roots=True)
-#     transitions = tree_utils.transitions_in_tree(sentence_tree)
-
-#     product = 1
-#     probs = []
-#     for transition in transitions:
-#         transition_probs = hmm_utils.prob_of_all_transitions(transition, counts, gram_size=3)
-#         for a_prob in transition_probs:
-#             product *= a_prob
-#             probs.append(a_prob)
-
-#     stats = dict(
-#         min=min(probs),
-#         avg=sum(probs)/len(probs),
-#         prod=product
-#     )
-#     return stats
-
-
 if __name__ == "__main__":
 
     essay_index = cmd_essay_index()
@@ -172,4 +147,3 @@ if __name__ == "__main__":
                 issues_in_text += issues_in_sentence
                 issues_in_line += issues_in_sentence
     print issues_in_text
-

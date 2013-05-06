@@ -1,6 +1,6 @@
 .DS_Store
 cache/*.data
-contrib/stanford-parser
+contrib/*
 
 *.py[cod]
 
