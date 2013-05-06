@@ -25,40 +25,39 @@ def parse(text):
 
     sentence_probs = []
     for line in text.split("\n"):
-        parses = sentence_tokenizer.parse(line, include_prob=True)
+        sentences = sentence_tokenizer.parse(line)
 
-        for sentences, prob in parses:
-            for sentence in sentences:
+        for sentence in sentences:
 
-                # Add a period to the end of the sentence, which sometimes
-                # forces a better parse
-                #if sentence[-1] not in ('.', '!', '?'):
+            # Add a period to the end of the sentence, which sometimes
+            # forces a better parse
+            #if sentence[-1] not in ('.', '!', '?'):
 #                    sentence += '.'
 
-                parse_trees = parsers.parse(sentence)
-                for tree in parse_trees:
-                    if cmd_utils.cmd_log_level() > 2:
-                        print tree.pprint()
+            parse_trees = parsers.parse(sentence)
+            for tree in parse_trees:
+                if cmd_utils.cmd_log_level() > 2:
+                    print tree.pprint()
 
-                    evindenced_lexical_rules = set(lexical_rules(tree).keys())
-                    differences = evindenced_lexical_rules.difference(treebank_rules)
+                evindenced_lexical_rules = set(lexical_rules(tree).keys())
+                differences = evindenced_lexical_rules.difference(treebank_rules)
 
-                    bad_generations = len(differences)
-                    log("Found {0} bad generations ({1})".format(bad_generations, differences), 3)
+                bad_generations = len(differences)
+                log("Found {0} bad generations ({1})".format(bad_generations, differences), 3)
 
-                    #bad_parse_prob = 1 if prob == 0 else 0
-                    #log("Scored {0} for prob {1}".format(bad_parse_prob, prob), 3)
+                #bad_parse_prob = 1 if prob == 0 else 0
+                #log("Scored {0} for prob {1}".format(bad_parse_prob, prob), 3)
 
-                    bad_tag_problems = num_tag_problems(tree)
-                    log("Found {0} X or FRAG tags".format(bad_tag_problems), 3)
+                bad_tag_problems = num_tag_problems(tree)
+                log("Found {0} X or FRAG tags".format(bad_tag_problems), 3)
 
-                    bad_sbar_problems = num_sbar_problems(tree)
-                    log("Found {0} bad SBAR issues".format(bad_sbar_problems), 3)
+                bad_sbar_problems = num_sbar_problems(tree)
+                log("Found {0} bad SBAR issues".format(bad_sbar_problems), 3)
 
-                    total_problems = bad_sbar_problems + bad_tag_problems + bad_generations
-                    log("In '{0}'".format(sentence), 2)
-                    log("Found {0} sentence formation problems".format(total_problems), 1)
-                    sentence_probs.append(total_problems)
+                total_problems = bad_sbar_problems + bad_tag_problems + bad_generations
+                log("In '{0}'".format(sentence), 2)
+                log("Found {0} sentence formation problems".format(total_problems), 1)
+                sentence_probs.append(total_problems)
     return sentence_probs
 
 

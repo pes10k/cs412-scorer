@@ -13,6 +13,7 @@ final_score_stdin = cmd_utils.cmd_flag('--final-score', None)
 parse_stdin = cmd_utils.cmd_flag('--parse', None)
 score_stdin = cmd_utils.cmd_flag('--score', None)
 pronoun_stdin = cmd_utils.cmd_flag('--pronoun', None)
+topic_stdin = cmd_utils.cmd_flag('--topic', None)
 syntactic_formation_stdin = cmd_utils.cmd_flag('--syn-formation', None)
 agreement_stdin = cmd_utils.cmd_flag('--agree', None)
 sentence_parse_stdin = cmd_utils.cmd_flag('--sen-token', None)
@@ -78,6 +79,10 @@ elif pronoun_stdin:
     import text_coherence
     text = cmd_utils.get_stdin().strip()
     print text_coherence.parse(text)
+elif topic_stdin:
+    import topic_coherence
+    text = cmd_utils.get_stdin().strip()
+    print topic_coherence.parse(text)
 elif final_score_stdin:
     import grade_utils
     text = cmd_utils.get_stdin().strip()

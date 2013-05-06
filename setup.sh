@@ -4,7 +4,7 @@
 
 EXISTS_MESSAGE="  - Already exists, skipping"
 
-echo "Downloading needed libraries and packages for this package"
+echo "Downloading needed libraries and packages for this package\needed"
 
 # # First download the Malt Parser
 # echo "Downloading the Malt Parser"
@@ -38,7 +38,7 @@ else
     curl http://nlp.stanford.edu/software/stanford-parser-2013-04-05.zip > contrib/stanford-parser.zip
     unzip -qq contrib/stanford-parser.zip -d contrib
     ln -s stanford-parser-2013-04-05/ contrib/stanford-parser
-    rm contrib/stanford-parser.zip
+    rm contrib/stanford-parser.zip-1.0
 fi
 echo "Finished downloading parser\n"
 
@@ -52,4 +52,16 @@ else
     ln -s stanford-corenlp-full-2013-04-04/ contrib/stanford-corenlp
     rm contrib/stanford-corenlp.zip
 fi
-echo "Finished downloading Stanford core nlp library"
+echo "Finished downloading Stanford core nlp library\n"
+
+# echo "Downloading Port Stemmer library"
+# if [ -d "contrib/stemming" ]
+# then
+#     echo $EXISTS_MESSAGE
+# else
+#     curl https://pypi.python.org/packages/source/s/stemming/stemming-1.0.tar.gz > contrib/stemming-1.0.tar.gz
+#     tar -C contrib -xzf contrib/stemming-1.0.tar.gz
+#     ln -s stemming-1.0/ contrib/stemming
+#     rm contrib/stemming-1.0.tar.gz
+# fi
+# echo "Finished downloading Port Stemmer python library\n"

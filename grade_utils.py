@@ -7,7 +7,7 @@ from cmd_utils import log
 
 
 cols = ('1a', '1b', '1c', '1d', '2a', '2b', '3a')
-implemented_grades = ('1a', '1b', '1c', '1d', '3a')
+implemented_grades = ('1a', '1b', '1c', '1d', '2a', '2b', '3a')
 grades = [[float(n) for n in l.split()[1:]] for l in open(os.path.join("data/grades.txt")).readlines()[::-1][:-5]]
 
 
@@ -30,6 +30,10 @@ def grade_text(text, grade_type):
         return grade_1c(text)
     elif grade_type == '1d':
         return grade_1d(text)
+    elif grade_type == '2a':
+        return grade_2a(text)
+    elif grade_type == '2b':
+        return grade_2b(text)
 
 
 def grade_1a(text):
@@ -81,6 +85,52 @@ def grade_1d(text):
     return score
 
 
+def grade_2a(text):
+    import text_coherence
+
+    # weights
+    weight_2nd_person = -1
+    weight_3rd_person_good = 1
+    weight_3rd_person_bad = -2
+    weight_3rd_person_avg = .5
+    weight_sen = .2
+
+    pronoun_biz = text_coherence.parse(text)
+
+    first_person_pronouns = []
+    second_person_pronouns = []
+    third_person_pronouns = []
+
+    score = 0
+
+    for sentence in pronoun_biz:
+        first_person_pronouns += sentence[0]
+        second_person_pronouns += sentence[1]
+        third_person_pronouns += sentence[2]
+        for third_person_pronoun in third_person_pronouns:
+            if third_person_pronoun[1] == -1:
+                score += (weight_3rd_person_bad)
+            elif third_person_pronoun[1] == .5:
+                score += (weight_3rd_person_avg)
+            else:
+                score += (weight_3rd_person_good)
+
+    return max(1, min(5, (2 + (weight_2nd_person * len(second_person_pronouns)) + score + (len(pronoun_biz) * weight_sen))))
+
+
+def grade_2b(text):
+    import topic_coherence
+    from math import ceil
+
+    family_weight = 1
+    work_weight = .5
+
+    family_hits, work_hits, nouns = topic_coherence.parse(text)
+    score = (float(family_hits * (5 * family_weight)) / (nouns - 1))
+    score += (float(work_hits * (5 * work_weight)) / (nouns - 1))
+    return ceil(min(5, score, nouns))
+
+
 def grade_3a(text):
     sentences = sentence_tokenizer.parse(text)
     num_sentences = len(sentences)
@@ -93,7 +143,7 @@ if __name__ == '__main__':
     import cmd_utils
 
     tests = cmd_utils.cmd_test()
-    tests = [tests] if tests else ('1a', '1b', '3a')
+    tests = [tests] if tests else ('1a', '1b', '1d', '2a', '2b', '3a')
     essay_index = int(cmd_utils.cmd_arg('--essay', 0)) - 1
 
     for test in tests:

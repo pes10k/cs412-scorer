@@ -29,7 +29,7 @@ def parse_coref(sentence, use_cache=True):
     cache_key = "coreferences"
     if use_cache:
         cache_attempt = cache_get(cache_key, sentence)
-        if cache_attempt:
+        if cache_attempt is not None:
             return cache_attempt
 
     import re
