@@ -15,6 +15,7 @@ counts = hmm_utils.get_transition_counts()
 
 # Flags that note that incode should be looked for in STDIN instead of
 # in a test essay file
+grade_directory = cmd_utils.cmd_arg('--dir', None)
 final_score_stdin = cmd_utils.cmd_flag('--final-score', None)
 parse_stdin = cmd_utils.cmd_flag('--parse', None)
 score_stdin = cmd_utils.cmd_flag('--score', None)
@@ -30,7 +31,28 @@ transition_count = cmd_utils.cmd_arg('--count', None)
 transition_prob = cmd_utils.cmd_arg('--prob', None)
 
 
-if score_stdin or parse_stdin:
+if grade_directory:
+    import os
+    import grade_utils
+
+    output = [",".join(grade_utils.cols) + ",final"]
+
+    for dirpath, dirnames, filenames in os.walk(grade_directory):
+        for name in filenames:
+            # First write the header line
+            text = [line.strip() for line in open(os.path.join(dirpath, name)).readlines() if len(line.strip()) > 1]
+            row = [int(grade_utils.grade_text("\n".join(text), test)) for test in grade_utils.cols]
+
+            row.append(round_to(float(sum(row) + row[3] + (row[5] * 2)) / 10, 0.5))
+            new_line = ",".join([str(v) for v in row])
+            output.append(new_line)
+    f = open('output.txt', 'w')
+    file_contents = "\n".join(output)
+    f.write(file_contents)
+    f.close()
+    print "Finished writing %d scores to output.txt" % (len(output) - 1,)
+
+elif score_stdin or parse_stdin:
     import tree_utils
     trees = parsers.parse(cmd_utils.get_stdin())
     for tree in trees:
