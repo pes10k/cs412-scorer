@@ -34,6 +34,22 @@ recent too.
 -------------------------------------------------------------------------
 --->INPUT<---------------------------------------------------------------
 
+Batch Mode
+---
+
+To score an entire directory of files, executing the scoring_utils.py script
+as follows:
+
+    python scoring_utils.py --dir <path to directory containing test files>
+
+The program will print a summary of the number of files it scored, and will
+write the results out into a file called output.txt to the current directory.
+For more feedback, you can also use the --log [0-5] flags with this method.
+
+
+Individual File Method
+---
+
 The essay scorer uses stdin, and accepts several command line arguments.
 The entry file is called scoring_utils.py.
 
@@ -62,6 +78,16 @@ will provide a torrent of feedback.
 
 -------------------------------------------------------------------------
 --->OUTPUT<--------------------------------------------------------------
+
+Batch Mode
+---
+
+No output is generated beyond what is described / required by the project guide
+lines when the program is launched using the above, batch directory method.
+
+
+Individual File Method
+---
 
 For each piece of text / essay being evaluated, the following output is
 generated (assuming no logging / verbose output is specified):
