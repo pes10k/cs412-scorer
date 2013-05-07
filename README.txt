@@ -1,5 +1,6 @@
 project 2 for CS421 - University of Illinois at Chicago
 Name1 Peter Snyder  <psnyde2(at)uic.edu>
+https://github.com/snyderp/cs412-scorer
 -------------------------------------------------------------------------
 --->SETUP<---------------------------------------------------------------
 
